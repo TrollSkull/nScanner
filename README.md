@@ -1,4 +1,3 @@
-# nScanner
 <p align="left">
 <img src="/.assets/logo.png" width="400" height="200"/>
 
