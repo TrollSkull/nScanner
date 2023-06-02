@@ -16,6 +16,11 @@ Once you get a key you need to put it in the APIKEY variable in `./lib/core/cons
 Also you can change the language of the requested information in `./lib/core/const.py` modifying the DEFLANG variable, see the supported languages [here](https://pypi.org/project/phonenumbers/).
 
 ## INSTALLATION
+### One line installation.
+Just copy this line and paste in the terminal.
+```bash
+apt install -y git python; git clone https://github.com/TrollSkull/nScanner; cd nScanner; python nscanner.py
+```
 
 You can download nScanner on any platform by cloning the official Git repository:
 
