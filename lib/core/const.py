@@ -4,7 +4,7 @@ DEFLANG = 'en'
 
 # APIKEY (your numverify.com api key) you can get a key for free on:
 # https://apilayer.com/marketplace/number_verification-api
-APIKEY = 'APIKEY'
+APIKEY = '6ccdce3a0f46148e6c093b06fd41ad7a'
 
 ############# DON'T TOUCH ANYTHING BELOW ############
 
