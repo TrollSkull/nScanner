@@ -1,35 +1,54 @@
-import requests, urllib.request, sys
-from lib.core.const import Colors, TOOL_VERSION
-from lib.core.checkwifi import checkwifi
-from lib.core.exceptions import MyExceptions
+from pathlib import Path
+import tempfile
+import zipfile
+import shutil
+import sys
 
-url = "https://raw.githubusercontent.com/TrollSkull/nScanner/master/"
+import requests
 
-def update():
-    files = ['nscanner.py', 'lib/core/checkwifi.py', 'lib/core/updater.py', 'lib/core/version',
-             'lib/core/const.py', 'lib/main.py', 'lib/core/exceptions.py']
-    
-    for file in files:
-        data = urllib.request.urlopen(url + file).read()
-        
-        with open(file, "wb") as f:
-            f.write(data)
-    
-    sys.exit(Colors.OK + "\n[nScanner]" + Colors.WHITE + " Updated successfull, exiting script.")
+from .metadata import __version__
+from .const import Colors
 
-def checkversion():
-    try:
-        checkwifi(host = 'google.com', port = 80)
-        git_version = requests.get("https://raw.githubusercontent.com/TrollSkull/nScanner/main/lib/core/version").text  
-    
-    except Exception as err:
-        raise MyExceptions
-    
-    print(Colors.BLUE + "\n[nScanner]" + Colors.WHITE +" Verifying Git version...")
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+REPO = "TrollSkull/nScanner"
 
-    if (TOOL_VERSION == git_version):
-        print(Colors.YELLOW + "\n[nScanner]" + Colors.WHITE + " Version match with GitHub repository.")
-        
-    else:
-        print(Colors.BLUE + "\n[nScanner]" + Colors.WHITE + " Update available, downloading " + Colors.BLUE + "(" + Colors.OK + git_version + Colors.BLUE + ")...")
-        update()
+LATEST_RELEASE = f"https://api.github.com/repos/{REPO}/releases/latest"
+
+def update_tool():
+    response = requests.get(LATEST_RELEASE, timeout = 10)
+    response.raise_for_status()
+
+    data = response.json()
+    zip_url = data["zipball_url"]
+
+    print(Colors.BLUE + "\n[nScanner]" + Colors.WHITE + " Downloading update...")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        zip_path = Path(tmp) / "update.zip"
+
+        with requests.get(zip_url, stream=True) as request:
+            request.raise_for_status()
+
+            with open(zip_path, "wb") as file:
+                for chunk in request.iter_content(8192):
+                    file.write(chunk)
+
+        with zipfile.ZipFile(zip_path) as zip:
+            zip.extractall(tmp)
+
+        extracted = next(Path(tmp).iterdir())
+
+        for item in extracted.iterdir():
+            target = PROJECT_ROOT / item.name
+
+            if target.exists():
+                if target.is_dir():
+                    shutil.rmtree(target)
+
+                else:
+                    target.unlink()
+
+            shutil.move(str(item), str(target))
+
+    print(Colors.GREEN + "\n[nScanner]" + Colors.WHITE + " Update completed successfully. " + f"({__version__} > {data["name"]})")
+    sys.exit(0)

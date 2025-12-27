@@ -7,8 +7,6 @@ DEFLANG = 'en'
 APIKEY = 'APIKEY'
 
 ############# DON'T TOUCH ANYTHING BELOW ############
-
-TOOL_VERSION = open("./lib/core/version", "r").read()
 BANNER = (r'''
         ____                          
   ___  / __/______ ____  ___  ___ ____

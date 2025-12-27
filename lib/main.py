@@ -1,9 +1,13 @@
-from lib.core.checkwifi import checkwifi
-from lib.core.exceptions import MyExceptions
-from lib.core.updater import checkversion
+import argparse
+import time
+import json
+import sys
+
+from lib.core.network import has_internet_connection
+from lib.core.updater import update_tool
+from lib.core.metadata import __version__
 
 from lib.core.const import (
-    TOOL_VERSION,
     DEFLANG,
     APIKEY,
     BANNER,
@@ -11,33 +15,39 @@ from lib.core.const import (
 )
 
 import phonenumbers
+import requests
+
 from phonenumbers import carrier
 from phonenumbers import geocoder
 from phonenumbers import timezone
 
-import requests
-import argparse
-import time
-import json
-import sys
-
 try:
     if sys.argv[1] == '--update' or sys.argv[1] == '-u':
-        checkversion()
+        update_tool()
+
 except IndexError:
     pass
 
-parser = argparse.ArgumentParser(description='nScanner by TrollSkull',
-                                 usage="nscanner.py -n <your number here> [options] or -u for update")
+parser = argparse.ArgumentParser(
+    description = 'nScanner by TrollSkull',
+    usage = "nscanner.py -n <your number here> [options] or -u for update"
+)
 
-parser.add_argument('--number', '-n', type=str, required=False,
-                    help='enter a number to start a scan.')
+parser.add_argument(
+    '--number',
+    '-n',
+    type = str,
+    required = False,
+    help = 'Enter a number to start a scan.'
+)
 
 args = parser.parse_args()
 
-def numverifyscan(number, apikey):
-    get = requests.get('https://api.apilayer.com/number_verification/validate',
-                       params={'number': number}, headers={'apikey': apikey}).text
+def numverify_scan(number, apikey):
+    get = requests.get(
+        'https://api.apilayer.com/number_verification/validate',
+        params = {'number': number}, headers = {'apikey': apikey}
+    ).text
 
     try:
         jsonload = json.loads(get)
@@ -51,35 +61,38 @@ def numverifyscan(number, apikey):
     print(f'{Colors.YELLOW}Country Prefix: {Colors.WHITE}{jsonload["country_prefix"]}')
     print(f'{Colors.YELLOW}Local Format: {Colors.WHITE}{jsonload["local_format"]}')
 
-def scannumber(InputNumber):
-    if "+" not in InputNumber:
+def scan_number(input_number):
+    if "+" not in input_number:
         sys.exit(f'{Colors.RED}\n[nScanner] {Colors.WHITE}The country prefix has not been entered. (ex: +598)')
 
     try:
-        NumberObject = phonenumbers.parse(InputNumber)
+        number_object = phonenumbers.parse(input_number)
 
-        if phonenumbers.is_possible_number(NumberObject):
+        if phonenumbers.is_possible_number(number_object):
             print(f'{Colors.GREEN}\n[nScanner] {Colors.WHITE}The number is valid and possible. \n')
             time.sleep(2)
+            
         else:
             print(f'{Colors.RED}\n[nScanner] The number is valid but might not be possible.{Colors.WHITE} \n')
 
     except Exception as error:
         sys.exit(str(error))
 
-    strip = str(timezone.time_zones_for_number(NumberObject)).replace("('", '')
+    strip = str(timezone.time_zones_for_number(number_object)).replace("('", '')
     time_zone = strip.replace("',)", '')
 
-    location = geocoder.description_for_number(NumberObject, DEFLANG)
-    carriers = carrier.name_for_number(NumberObject, DEFLANG)
+    location = geocoder.description_for_number(number_object, DEFLANG)
+    carriers = carrier.name_for_number(number_object, DEFLANG)
 
     print(f'{Colors.YELLOW}Time Zone: {Colors.WHITE}{time_zone}')
     print(f'{Colors.YELLOW}Location: {Colors.WHITE}{location}')
     print(f'{Colors.YELLOW}Carrier: {Colors.WHITE}{carriers}')
 
 def main():
-    checkwifi(host = 'google.com', port = 80)
-    print(Colors.YELLOW + BANNER + Colors.WHITE + f'{TOOL_VERSION}\n')
+    if not has_internet_connection(host = 'google.com', port = 80):
+        sys.exit(Colors.RED + '\n[nScanner] ' + Colors.WHITE + 'No internet connection detected, please check your connection and try again.\n')
+
+    print(Colors.YELLOW + BANNER + Colors.WHITE + f'{__version__}\n')
 
     if APIKEY == 'APIKEY':
         print(Colors.RED + '\n[nScanner] ' + Colors.WHITE + 'You need an APIKEY to start using nScanner.\n')
@@ -90,18 +103,19 @@ def main():
     try:
         if not args.number:
             number = input(Colors.YELLOW + '[nScanner] ' + Colors.WHITE + 'Enter your number: ')
+
         else:
             number = str(args.number)
 
     except KeyboardInterrupt:
         sys.exit(Colors.YELLOW + '\n[nScanner] ' + Colors.WHITE + 'Keyboard interrupt detected, exiting.')
 
-    scannumber(InputNumber = number)
+    scan_number(input_number = number)
 
     print(Colors.BLUE + '\n[nScanner] ' + Colors.WHITE +'Using ' + Colors.GRAY + '"numverify.com"' + Colors.WHITE + ' api to fetch more data...\n')
 
     apinum = number.replace('+', '')
-    numverifyscan(number = int(apinum), apikey = APIKEY)
+    numverify_scan(number = apinum, apikey = APIKEY)
 
     print(Colors.GREEN + '\n[nScanner] ' + Colors.WHITE + 'Done!')
 
