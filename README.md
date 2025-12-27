@@ -6,7 +6,7 @@
   [![License](https://img.shields.io/badge/License-GPL%203.0-yellow)]()
 </div>
 
-# 📱 nScanner: OSINT-based phone number information tool.
+# 📱 nScanner: OSINT-based phone information tool.
 **nScanner** is a command-line OSINT tool designed to retrieve public information about a phone number using open-source libraries and third-party APIs such as **[Numverify](https://numverify.com/)**.
 
 It allows you to quickly validate numbers and gather metadata like country, carrier, and line type in a simple and lightweight way.
